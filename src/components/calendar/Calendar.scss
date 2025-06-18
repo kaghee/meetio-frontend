@@ -1,0 +1,15 @@
+.calendar-container {
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  max-width: 500px;
+  padding: 20px;
+  border: 1px solid #000;
+  border-radius: 5px;
+  .content {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+}
