@@ -1,7 +1,4 @@
 .dialog {
-  .meeting-time {
-    display: flex;
-  }
   [class*="MuiPickersInputBase-root"] {
     height: 40px;
     width: 180px;
@@ -9,5 +6,32 @@
   [class*="MuiPickersSectionList-root"] {
     justify-content: center;
     font-size: 16px;
+  }
+  .time-block {
+    .start {
+      margin-right: 20px;
+    }
+    margin-bottom: 20px;
+  }
+
+  hr {
+    border: .5px solid #ddd;
+  }
+
+  .department {
+    margin: 15px 0 10px;
+    height: 40px;
+  }
+
+  .attendees-block, .attendees {
+    display: flex;
+    flex-direction: column;
+  }
+  .attendee {
+    padding-left: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
   }
 }

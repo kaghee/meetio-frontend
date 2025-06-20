@@ -4,12 +4,13 @@ import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { DateTimePicker } from "@mui/x-date-pickers";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import type { MeetingData } from "../meeting/Meeting";
 import type { Dayjs } from "dayjs";
 import "./DetailPanel.scss";
+import { Checkbox } from "@mui/material";
 
 interface DetailPanelProps {
   isOpen: boolean;
@@ -29,10 +30,12 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
   close,
   meeting,
 }) => {
+  console.log("meeting", meeting);
+
   const { control } = useForm<FormData>({
     defaultValues: {
-      start: undefined,
-      end: undefined,
+      start: meeting?.start_time,
+      end: meeting?.end_time,
       department: "",
       attendees: [],
     },
@@ -48,32 +51,49 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
               <Controller
                 name="start"
                 control={control}
-                render={({ field }) => <DatePicker {...field} />}
+                render={({ field }) => (
+                  <DateTimePicker {...field} className="start" />
+                )}
               />
               <Controller
                 name="end"
                 control={control}
-                render={({ field }) => <DatePicker {...field} />}
+                render={({ field }) => <DateTimePicker {...field} />}
               />
             </div>
+            <hr />
             <div className="attendees-block">
               <Controller
                 name="department"
                 control={control}
                 render={({ field }) => (
-                  <Select {...field}>
+                  <Select
+                    {...field}
+                    displayEmpty
+                    className="department"
+                    renderValue={(selected) => {
+                      if (selected.length === 0) {
+                        return <em>Select a department</em>;
+                      }
+
+                      return selected;
+                    }}
+                  >
                     <MenuItem disabled value="">
-                      <em>Placeholder</em>
+                      <em>Select a department</em>
                     </MenuItem>
-                    <MenuItem value={"sales"}>Sales</MenuItem>
+                    <MenuItem value={"Sales"}>Sales</MenuItem>
                   </Select>
                 )}
               />
-              {/* {meeting.attendees ? (
-              {meeting.attendees.map((attendee) => (
-                <Checkbox/>
-              ))}
-            )} */}
+              <div className="attendees">
+                {["Roronoa Zoro", "Vinsmoke Sanji", "Jinbe"].map((attendee) => (
+                  <div className="attendee">
+                    <span>{attendee}</span>
+                    <Checkbox />
+                  </div>
+                ))}
+              </div>
             </div>
           </DialogContent>
         </>
