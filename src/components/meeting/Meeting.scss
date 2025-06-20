@@ -1,0 +1,14 @@
+.meeting {
+  grid-column: 2;
+  background-color: #add8e6;
+  border: 1px solid #7cb9e8;
+  border-radius: 4px;
+  padding: 5px;
+  margin: 0 10px;
+  z-index: 1;
+  font-size: 12px;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
