@@ -8,6 +8,7 @@ import ArrowRightIcon from "@mui/icons-material/ArrowRight";
 import dayjs from "dayjs";
 import type { Dayjs } from "dayjs";
 import { type MeetingData } from "../meeting/Meeting";
+import DetailPanel from "../detailPanel/DetailPanel";
 import "./Calendar.scss";
 
 export const START_HOUR = 8;
@@ -17,6 +18,13 @@ export const INTERVAL_MINUTES = 30;
 const Calendar: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
   const [meetings, setMeetings] = useState<MeetingData[]>([]);
+  const [selectedMeetingId, setSelectedMeetingId] = useState<number | null>(
+    null,
+  );
+  const [detailPanelState, setDetailPanelState] = useState<{
+    isOpen: boolean;
+    meetingId: number | null;
+  }>({ isOpen: false, meetingId: null });
 
   useEffect(() => {
     const today = new Date();
@@ -47,6 +55,19 @@ const Calendar: React.FC = () => {
 
     setMeetings(meetingResponse);
   }, []);
+
+  useEffect(() => {
+    if (selectedMeetingId) {
+      setDetailPanelState({ isOpen: true, meetingId: selectedMeetingId });
+    } else {
+      setDetailPanelState({ isOpen: false, meetingId: null });
+    }
+  }, [selectedMeetingId]);
+
+  const closeDetailPanel = () => {
+    setSelectedMeetingId(null);
+    setDetailPanelState({ isOpen: false, meetingId: null });
+  };
 
   // Sets the date to the previous or the next day
   const changeDate = (direction: number) => {
@@ -124,6 +145,7 @@ const Calendar: React.FC = () => {
         <div
           key={meeting.id}
           className="meeting"
+          onClick={() => setSelectedMeetingId(meeting.id)}
           style={{
             gridRowStart: gridRowStart,
             gridRowEnd: gridRowEnd,
@@ -168,6 +190,11 @@ const Calendar: React.FC = () => {
           {renderGridLines()}
           {renderMeetingBlocks()}
         </div>
+        <DetailPanel
+          isOpen={selectedMeetingId !== null && detailPanelState.isOpen}
+          close={() => closeDetailPanel()}
+          meeting={meetings.find((meeting) => meeting.id === selectedMeetingId)}
+        />
       </LocalizationProvider>
     </div>
   );
