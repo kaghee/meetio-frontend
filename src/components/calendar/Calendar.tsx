@@ -9,6 +9,7 @@ import dayjs from "dayjs";
 import type { Dayjs } from "dayjs";
 import { type MeetingData } from "../meeting/Meeting";
 import DetailPanel from "../detailPanel/DetailPanel";
+import { useGetAppointmentsQuery } from "../../services/appointment";
 import "./Calendar.scss";
 
 export const START_HOUR = 8;
@@ -26,35 +27,27 @@ const Calendar: React.FC = () => {
     meetingId: number | null;
   }>({ isOpen: false, meetingId: null });
 
-  useEffect(() => {
-    const today = new Date();
-    setSelectedDate(dayjs(today));
-    const meetingResponse: MeetingData[] = [
-      {
-        id: 1,
-        title: "Meeting 1",
-        description: "Lorem ipsum",
-        start_time: dayjs(today).hour(10).minute(0).second(0).toDate(),
-        end_time: dayjs(today).hour(11).minute(0).second(0).toDate(),
-      },
-      {
-        id: 2,
-        title: "Meeting 2",
-        description: "Something something",
-        start_time: dayjs(today).hour(12).minute(0).second(0).toDate(),
-        end_time: dayjs(today).hour(13).minute(30).second(0).toDate(),
-      },
-      {
-        id: 3,
-        title: "Meeting 3",
-        description: "Yet another one",
-        start_time: dayjs(today).hour(16).minute(0).second(0).toDate(),
-        end_time: dayjs(today).hour(18).minute(30).second(0).toDate(),
-      },
-    ];
+  /* This is not ideal as a new request is sent after the date is set
+  in case of no meetings on the current date, but future meetings found.
+  The response will be the same as the original request's.
+  */
+  const { data: appointmentsResponse, isLoading } = useGetAppointmentsQuery({
+    date: (selectedDate ?? dayjs(new Date())).format("YYYY-MM-DD"),
+  });
 
-    setMeetings(meetingResponse);
+  useEffect(() => {
+    const today = dayjs(new Date());
+    setSelectedDate(today);
   }, []);
+
+  /* After appointments are fetched, sets the date (of the next
+  appointments) and the appointments array from the response. */
+  useEffect(() => {
+    if (isLoading || !appointmentsResponse) return;
+
+    setMeetings(appointmentsResponse.appointments);
+    setSelectedDate(dayjs(appointmentsResponse.date));
+  }, [appointmentsResponse, isLoading]);
 
   useEffect(() => {
     if (selectedMeetingId) {
@@ -87,8 +80,8 @@ const Calendar: React.FC = () => {
   };
 
   const calculateMeetingPosition = (meeting: MeetingData) => {
-    const gridRowStart = timeToGridRow(meeting.start_time);
-    const gridRowEnd = timeToGridRow(meeting.end_time);
+    const gridRowStart = timeToGridRow(new Date(meeting.start_time));
+    const gridRowEnd = timeToGridRow(new Date(meeting.end_time));
 
     return {
       gridRowStart,
@@ -138,7 +131,7 @@ const Calendar: React.FC = () => {
   };
 
   const renderMeetingBlocks = () => {
-    return meetings.map((meeting) => {
+    return meetings?.map((meeting: MeetingData) => {
       const { gridRowStart, gridRowEnd } = calculateMeetingPosition(meeting);
 
       return (
@@ -153,12 +146,12 @@ const Calendar: React.FC = () => {
         >
           <strong>{meeting.title}</strong>
           <br />
-          {meeting.start_time.toLocaleTimeString([], {
+          {new Date(meeting.start_time).toLocaleTimeString([], {
             hour: "2-digit",
             minute: "2-digit",
           })}{" "}
           -{" "}
-          {meeting.end_time.toLocaleTimeString([], {
+          {new Date(meeting.end_time).toLocaleTimeString([], {
             hour: "2-digit",
             minute: "2-digit",
           })}
@@ -190,11 +183,15 @@ const Calendar: React.FC = () => {
           {renderGridLines()}
           {renderMeetingBlocks()}
         </div>
-        <DetailPanel
-          isOpen={selectedMeetingId !== null && detailPanelState.isOpen}
-          close={() => closeDetailPanel()}
-          meeting={meetings.find((meeting) => meeting.id === selectedMeetingId)}
-        />
+        {selectedMeetingId && (
+          <DetailPanel
+            isOpen={selectedMeetingId !== null && detailPanelState.isOpen}
+            close={() => closeDetailPanel()}
+            meeting={meetings.find(
+              (meeting) => meeting.id === selectedMeetingId,
+            )}
+          />
+        )}
       </LocalizationProvider>
     </div>
   );

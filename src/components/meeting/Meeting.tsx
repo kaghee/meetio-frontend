@@ -6,12 +6,17 @@ interface MeetingProps {
   data: MeetingData;
 }
 
+export interface MeetingResponse {
+  date: string;
+  appointments: MeetingData[];
+}
+
 export interface MeetingData {
   id: number;
   title: string;
   description: string;
-  start_time: Date;
-  end_time: Date;
+  start_time: string;
+  end_time: string;
 }
 
 const Meeting: React.FC<MeetingProps> = ({ data }) => {
@@ -26,10 +31,10 @@ const Meeting: React.FC<MeetingProps> = ({ data }) => {
   }, [data]);
 
   const calculateMeetingGridProps = (meeting: MeetingData) => {
-    const startHour = meeting.start_time.getHours();
-    const startMinute = meeting.start_time.getMinutes();
-    const endHour = meeting.end_time.getHours();
-    const endMinute = meeting.end_time.getMinutes();
+    const startHour = new Date(meeting.start_time).getHours();
+    const startMinute = new Date(meeting.start_time).getMinutes();
+    const endHour = new Date(meeting.end_time).getHours();
+    const endMinute = new Date(meeting.end_time).getMinutes();
 
     const totalMinutesFromStart = (startHour - START_HOUR) * 30 + startMinute;
     const gridRowStart =
@@ -54,12 +59,12 @@ const Meeting: React.FC<MeetingProps> = ({ data }) => {
     >
       <strong>{data.title}</strong>
       <div>
-        {data.start_time.toLocaleTimeString([], {
+        {new Date(data.start_time).toLocaleTimeString([], {
           hour: "2-digit",
           minute: "2-digit",
         })}{" "}
         -{" "}
-        {data.end_time.toLocaleTimeString([], {
+        {new Date(data.end_time).toLocaleTimeString([], {
           hour: "2-digit",
           minute: "2-digit",
         })}
