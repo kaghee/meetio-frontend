@@ -11,6 +11,7 @@ import type { MeetingData } from "../meeting/Meeting";
 import type { Dayjs } from "dayjs";
 import "./DetailPanel.scss";
 import { Checkbox } from "@mui/material";
+import dayjs from "dayjs";
 
 interface DetailPanelProps {
   isOpen: boolean;
@@ -18,11 +19,16 @@ interface DetailPanelProps {
   meeting: MeetingData | undefined;
 }
 
+interface Attendee {
+  id: number;
+  name: string;
+}
+
 interface FormData {
   start: Dayjs;
   end: Dayjs;
   department: string;
-  attendees: string[];
+  attendees: Attendee[];
 }
 
 const DetailPanel: React.FC<DetailPanelProps> = ({
@@ -30,12 +36,12 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
   close,
   meeting,
 }) => {
-  console.log("meeting", meeting);
+  console.log("meeting", meeting?.start_time);
 
   const { control } = useForm<FormData>({
     defaultValues: {
-      start: meeting?.start_time,
-      end: meeting?.end_time,
+      start: meeting ? dayjs(meeting.start_time) : undefined,
+      end: meeting ? dayjs(meeting.end_time) : undefined,
       department: "",
       attendees: [],
     },
@@ -52,13 +58,23 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
                 name="start"
                 control={control}
                 render={({ field }) => (
-                  <DateTimePicker {...field} className="start" />
+                  <DateTimePicker
+                    {...field}
+                    className="start"
+                    format="YYYY-MM-DD HH:mm"
+                  />
                 )}
               />
               <Controller
                 name="end"
                 control={control}
-                render={({ field }) => <DateTimePicker {...field} />}
+                render={({ field }) => (
+                  <DateTimePicker
+                    {...field}
+                    className="end"
+                    format="YYYY-MM-DD HH:mm"
+                  />
+                )}
               />
             </div>
             <hr />
@@ -72,7 +88,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
                     displayEmpty
                     className="department"
                     renderValue={(selected) => {
-                      if (selected.length === 0) {
+                      if (selected?.length === 0) {
                         return <em>Select a department</em>;
                       }
 
