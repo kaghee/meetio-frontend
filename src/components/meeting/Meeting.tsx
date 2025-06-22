@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { INTERVAL_MINUTES, START_HOUR } from "../calendar/Calendar";
 import "./Meeting.scss";
+import type { Employee } from "../../types";
 
 interface MeetingProps {
   data: MeetingData;
@@ -17,6 +18,7 @@ export interface MeetingData {
   description: string;
   start_time: string;
   end_time: string;
+  attendees: Partial<Employee>[];
 }
 
 const Meeting: React.FC<MeetingProps> = ({ data }) => {

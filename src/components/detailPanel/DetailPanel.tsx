@@ -12,6 +12,12 @@ import type { Dayjs } from "dayjs";
 import "./DetailPanel.scss";
 import { Checkbox } from "@mui/material";
 import dayjs from "dayjs";
+import {
+  useGetDepartmentsQuery,
+  useGetEmployeesByIdQuery,
+} from "../../services/department";
+import { useEffect, useState } from "react";
+import { useUpdateAppointmentMutation } from "../../services/appointment";
 
 interface DetailPanelProps {
   isOpen: boolean;
@@ -19,16 +25,11 @@ interface DetailPanelProps {
   meeting: MeetingData | undefined;
 }
 
-interface Attendee {
-  id: number;
-  name: string;
-}
-
 interface FormData {
   start: Dayjs;
   end: Dayjs;
   department: string;
-  attendees: Attendee[];
+  attendees: number[];
 }
 
 const DetailPanel: React.FC<DetailPanelProps> = ({
@@ -36,89 +37,155 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
   close,
   meeting,
 }) => {
-  console.log("meeting", meeting?.start_time);
-
-  const { control } = useForm<FormData>({
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState<number>();
+  const [updateAppointment] = useUpdateAppointmentMutation();
+  const { control, handleSubmit, watch } = useForm<FormData>({
     defaultValues: {
       start: meeting ? dayjs(meeting.start_time) : undefined,
       end: meeting ? dayjs(meeting.end_time) : undefined,
       department: "",
-      attendees: [],
+      attendees: meeting?.attendees.map((att) => att.id) || [],
     },
   });
 
+  const departmentValue = watch("department");
+
+  const { data: departments } = useGetDepartmentsQuery({});
+  const { data: employees } = useGetEmployeesByIdQuery(selectedDepartmentId!, {
+    skip: selectedDepartmentId === undefined,
+  });
+
+  useEffect(() => {
+    if (departmentValue !== "") {
+      setSelectedDepartmentId(parseInt(departmentValue));
+    }
+  }, [departmentValue]);
+
+  const onSubmit = (data: FormData) => {
+    if (!meeting) return;
+
+    const payload = {
+      id: meeting.id,
+      start_time: data.start.toISOString(),
+      end_time: data.end.toISOString(),
+      department: data.department,
+      attendee_ids: data.attendees,
+    };
+    updateAppointment(payload);
+  };
+
   return (
     <Dialog className="dialog" open={isOpen} onClose={() => close()}>
-      {meeting ? (
-        <>
-          <DialogTitle>{meeting.title}</DialogTitle>
-          <DialogContent>
-            <div className="time-block">
-              <Controller
-                name="start"
-                control={control}
-                render={({ field }) => (
-                  <DateTimePicker
-                    {...field}
-                    className="start"
-                    format="YYYY-MM-DD HH:mm"
-                  />
-                )}
-              />
-              <Controller
-                name="end"
-                control={control}
-                render={({ field }) => (
-                  <DateTimePicker
-                    {...field}
-                    className="end"
-                    format="YYYY-MM-DD HH:mm"
-                  />
-                )}
-              />
-            </div>
-            <hr />
-            <div className="attendees-block">
-              <Controller
-                name="department"
-                control={control}
-                render={({ field }) => (
-                  <Select
-                    {...field}
-                    displayEmpty
-                    className="department"
-                    renderValue={(selected) => {
-                      if (selected?.length === 0) {
-                        return <em>Select a department</em>;
-                      }
-
-                      return selected;
-                    }}
-                  >
-                    <MenuItem disabled value="">
-                      <em>Select a department</em>
-                    </MenuItem>
-                    <MenuItem value={"Sales"}>Sales</MenuItem>
-                  </Select>
-                )}
-              />
-              <div className="attendees">
-                {["Roronoa Zoro", "Vinsmoke Sanji", "Jinbe"].map((attendee) => (
-                  <div className="attendee">
-                    <span>{attendee}</span>
-                    <Checkbox />
-                  </div>
-                ))}
+      <form onSubmit={handleSubmit(onSubmit)}>
+        {meeting ? (
+          <>
+            <DialogTitle>{meeting.title}</DialogTitle>
+            <DialogContent>
+              <div className="time-block">
+                <Controller
+                  name="start"
+                  control={control}
+                  render={({ field }) => (
+                    <DateTimePicker
+                      {...field}
+                      className="start"
+                      format="YYYY-MM-DD HH:mm"
+                    />
+                  )}
+                />
+                <Controller
+                  name="end"
+                  control={control}
+                  render={({ field }) => (
+                    <DateTimePicker
+                      {...field}
+                      className="end"
+                      format="YYYY-MM-DD HH:mm"
+                    />
+                  )}
+                />
               </div>
-            </div>
-          </DialogContent>
-        </>
-      ) : null}
-      <DialogActions>
-        <Button disabled={!meeting}>Save</Button>
-        <Button disabled={!meeting}>Delete</Button>
-        <Button onClick={() => close()}>Cancel</Button>
-      </DialogActions>
+              <hr />
+              <div className="attendees-block">
+                <Controller
+                  name="department"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      {...field}
+                      displayEmpty
+                      className="department"
+                      renderValue={(selected) => {
+                        if (selected?.length === 0) {
+                          return <em>Select a department</em>;
+                        }
+
+                        return selected;
+                      }}
+                      onChange={(e) =>
+                        setSelectedDepartmentId(
+                          departments?.find(
+                            (dpt) => dpt.name === e.target.value,
+                          )?.id,
+                        )
+                      }
+                    >
+                      <MenuItem disabled value="">
+                        <em>Select a department</em>
+                      </MenuItem>
+                      {(departments || []).map((dpt) => (
+                        <MenuItem value={dpt.name}>{dpt.name}</MenuItem>
+                      ))}
+                    </Select>
+                  )}
+                />
+                <div className="employees">
+                  {employees?.map((employee) => (
+                    <div className="employee" key={employee.id}>
+                      <span>{employee.name}</span>
+                      <Controller
+                        name="attendees"
+                        control={control}
+                        render={({ field }) => {
+                          const isChecked =
+                            employee.id !== undefined &&
+                            field.value.includes(employee.id);
+
+                          return (
+                            <Checkbox
+                              checked={isChecked}
+                              onChange={() => {
+                                if (isChecked) {
+                                  // Remove id from attendees formData
+                                  field.onChange(
+                                    field.value.filter(
+                                      (id) => id !== employee.id,
+                                    ),
+                                  );
+                                } else {
+                                  // Add employee.id to formData
+                                  field.onChange([...field.value, employee.id]);
+                                }
+                              }}
+                            />
+                          );
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </DialogContent>
+          </>
+        ) : null}
+        <DialogActions>
+          <Button disabled={!meeting} type={"submit"}>
+            Save
+          </Button>
+          <Button disabled={!meeting}>Delete</Button>
+          <Button onClick={() => close()}>Cancel</Button>
+        </DialogActions>
+      </form>
     </Dialog>
   );
 };

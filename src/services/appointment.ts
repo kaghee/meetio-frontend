@@ -1,5 +1,8 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import type { MeetingResponse } from "../components/meeting/Meeting";
+import type {
+  MeetingData,
+  MeetingResponse,
+} from "../components/meeting/Meeting";
 
 const getToken = () => {
   return localStorage.getItem("authToken");
@@ -25,7 +28,17 @@ export const appointmentApi = createApi({
         return `appointment/?date=${date}`;
       },
     }),
+    updateAppointment: builder.mutation<MeetingData, Partial<MeetingData>>({
+      query: (data) => {
+        return {
+          url: `appointment/${data.id}/`,
+          method: "PATCH",
+          body: data,
+        };
+      },
+    }),
   }),
 });
 
-export const { useGetAppointmentsQuery } = appointmentApi;
+export const { useGetAppointmentsQuery, useUpdateAppointmentMutation } =
+  appointmentApi;
