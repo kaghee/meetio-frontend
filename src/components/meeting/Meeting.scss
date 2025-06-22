@@ -1,15 +1,37 @@
-.meeting {
+
+.wrapper {
   grid-column: 2;
-  background-color: #add8e6;
-  border: 1px solid #7cb9e8;
-  border-radius: 4px;
-  padding: 5px;
-  margin: 0 10px;
-  z-index: 1;
-  font-size: 12px;
-  color: #333;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  cursor: pointer;
+  &.overlapping {
+    width: 90%;
+    position: relative;
+  }
+  .meeting {
+    font-size: 12px;
+    height: 100%;
+    color: #333;
+    cursor: pointer;
+    padding: 5px;
+    margin: 0 10px;
+    z-index: 1;
+    background-color: #add8e6;
+    border: 1px solid #7cb9e8;
+    border-radius: 4px;
+    box-sizing: border-box;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .overlap-counter {
+    position: absolute;
+    top: 0;
+    right: 0;
+    transform: translate(25px, 0);
+    margin: 5px;
+    padding: 5px;
+    font-size: 12px;
+    background-color: #ddd;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+  }
 }

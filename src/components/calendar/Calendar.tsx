@@ -21,6 +21,7 @@ export const INTERVAL_MINUTES = 30;
 const Calendar: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
   const [meetings, setMeetings] = useState<MeetingData[]>([]);
+  const [overlappingBlocks, setOverlappingBlocks] = useState<number[][]>([]);
   const [noAppointmentsFound, setNoAppointmentsFound] = useState(false);
   const [selectedMeetingId, setSelectedMeetingId] = useState<number | null>(
     null,
@@ -70,6 +71,8 @@ const Calendar: React.FC = () => {
   useEffect(() => {
     if (isLoading || !appointmentsResponse) return;
 
+    checkForOverlaps(appointmentsResponse.appointments);
+
     setMeetings(appointmentsResponse.appointments);
     setSelectedDate(dayjs(appointmentsResponse.date));
   }, [appointmentsResponse, isLoading]);
@@ -81,6 +84,39 @@ const Calendar: React.FC = () => {
       setDetailPanelState({ isOpen: false, meetingId: null });
     }
   }, [selectedMeetingId]);
+
+  // Checks if there are any overlapping appointments
+  const checkForOverlaps = (appointments: MeetingData[]) => {
+    const overlappingMeetings: number[][] = [];
+
+    // const overlaps = appointments.some((meeting, idx) => {
+    appointments.forEach((meeting, idx) => {
+      const startTime = new Date(meeting.start_time);
+      const endTime = new Date(meeting.end_time);
+
+      return appointments.some((otherMeeting, otherIndex) => {
+        // Skip comparing the same meeting
+        if (idx === otherIndex) return false;
+        const otherStartTime = new Date(otherMeeting.start_time);
+        const otherEndTime = new Date(otherMeeting.end_time);
+
+        console.log("this start end:", meeting.start_time, meeting.end_time);
+        console.log(
+          "other start end:",
+          otherMeeting.start_time,
+          otherMeeting.end_time,
+        );
+
+        if (
+          (startTime < otherEndTime && endTime > otherStartTime) ||
+          (otherStartTime < endTime && otherEndTime > startTime)
+        ) {
+          overlappingMeetings.push([meeting.id, otherMeeting.id]);
+        }
+        setOverlappingBlocks(overlappingMeetings);
+      });
+    });
+  };
 
   const closeDetailPanel = () => {
     setSelectedMeetingId(null);
@@ -155,31 +191,70 @@ const Calendar: React.FC = () => {
     return lines;
   };
 
+  /* Renders the meeting blocks in the calendar grid.
+  In case of overlapping meetings, it displays only the first one,
+  and shows a counter for the number of overlapping meetings.
+
+  TODO: use sets for proper handling
+  */
   const renderMeetingBlocks = () => {
     return meetings?.map((meeting: MeetingData) => {
       const { gridRowStart, gridRowEnd } = calculateMeetingPosition(meeting);
+      let isFirstOverlapping = false;
+      let shouldDisplay = true;
+      let overlapCounter = 0;
+
+      if (overlappingBlocks.length) {
+        const overlappingMeetings = overlappingBlocks.filter((overlaps) =>
+          overlaps.includes(meeting.id),
+        );
+
+        // Exclude the meeting itself
+        overlapCounter = overlappingMeetings.length - 1;
+
+        if (meeting.id === Math.min(...overlappingBlocks[0])) {
+          isFirstOverlapping = true;
+        } else {
+          shouldDisplay = false;
+        }
+      }
+
+      if (!shouldDisplay) return null;
 
       return (
         <div
           key={meeting.id}
-          className="meeting"
+          className={`wrapper${isFirstOverlapping ? " overlapping" : ""}`}
           onClick={() => setSelectedMeetingId(meeting.id)}
           style={{
             gridRowStart: gridRowStart,
             gridRowEnd: gridRowEnd,
           }}
         >
-          <strong>{meeting.title}</strong>
-          <br />
-          {new Date(meeting.start_time).toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          })}{" "}
-          -{" "}
-          {new Date(meeting.end_time).toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
+          <div className="meeting">
+            <strong>{meeting.title}</strong>
+            <br />
+            {new Date(meeting.start_time).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}{" "}
+            -{" "}
+            {new Date(meeting.end_time).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+            {overlapCounter > 0 && (
+              <div
+                className="overlap-counter"
+                onClick={(e) => {
+                  alert(`Meeting overlapping with ${overlapCounter} others.`);
+                  e.stopPropagation();
+                }}
+              >
+                +{overlapCounter}
+              </div>
+            )}
+          </div>
         </div>
       );
     });
