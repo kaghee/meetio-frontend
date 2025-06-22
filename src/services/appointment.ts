@@ -32,6 +32,15 @@ export const appointmentApi = createApi({
         return `appointment/?date=${date}`;
       },
     }),
+    createAppointment: builder.mutation<MeetingData, Partial<MeetingData>>({
+      query: (data) => {
+        return {
+          url: "appointment/",
+          method: "POST",
+          body: data,
+        };
+      },
+    }),
     updateAppointment: builder.mutation<MeetingData, Partial<MeetingData>>({
       query: (data) => {
         return {
@@ -54,6 +63,7 @@ export const appointmentApi = createApi({
 
 export const {
   useGetAppointmentsQuery,
+  useCreateAppointmentMutation,
   useUpdateAppointmentMutation,
   useDeleteAppointmentMutation,
 } = appointmentApi;

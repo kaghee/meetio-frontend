@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { Button } from "@mui/material";
 import ArrowLeftIcon from "@mui/icons-material/ArrowLeft";
 import ArrowRightIcon from "@mui/icons-material/ArrowRight";
 import dayjs from "dayjs";
@@ -11,6 +12,7 @@ import { type MeetingData } from "../meeting/Meeting";
 import DetailPanel from "../detailPanel/DetailPanel";
 import { useGetAppointmentsQuery } from "../../services/appointment";
 import "./Calendar.scss";
+import CreateModal from "../createModal/CreateModal";
 
 export const START_HOUR = 8;
 export const END_HOUR = 20;
@@ -23,6 +25,7 @@ const Calendar: React.FC = () => {
   const [selectedMeetingId, setSelectedMeetingId] = useState<number | null>(
     null,
   );
+  const [isCreateModalOpen, setCreateModalOpen] = useState(false);
   const [detailPanelState, setDetailPanelState] = useState<{
     isOpen: boolean;
     meetingId: number | null;
@@ -182,6 +185,11 @@ const Calendar: React.FC = () => {
     });
   };
 
+  const createAppointment = () => {
+    setSelectedMeetingId(null);
+    setCreateModalOpen(true);
+  };
+
   return (
     <div className="calendar-container">
       <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -215,6 +223,7 @@ const Calendar: React.FC = () => {
             </>
           )}
         </div>
+        <Button onClick={() => createAppointment()}>New appointment</Button>
         {selectedMeetingId && (
           <DetailPanel
             isOpen={selectedMeetingId !== null && detailPanelState.isOpen}
@@ -222,6 +231,13 @@ const Calendar: React.FC = () => {
             meeting={meetings.find(
               (meeting) => meeting.id === selectedMeetingId,
             )}
+          />
+        )}
+        {isCreateModalOpen && (
+          <CreateModal
+            close={() => {
+              setCreateModalOpen(false);
+            }}
           />
         )}
       </LocalizationProvider>
