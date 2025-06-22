@@ -4,6 +4,10 @@ import type {
   MeetingResponse,
 } from "../components/meeting/Meeting";
 
+interface GetAppointmentsQueryArgs {
+  date: string;
+}
+
 const getToken = () => {
   return localStorage.getItem("authToken");
 };
@@ -23,8 +27,8 @@ export const appointmentApi = createApi({
     },
   }),
   endpoints: (builder) => ({
-    getAppointments: builder.query<MeetingResponse, { date: string }>({
-      query: ({ date }: { date: string }) => {
+    getAppointments: builder.query<MeetingResponse, GetAppointmentsQueryArgs>({
+      query: ({ date }: GetAppointmentsQueryArgs) => {
         return `appointment/?date=${date}`;
       },
     }),

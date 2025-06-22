@@ -26,12 +26,19 @@ const Calendar: React.FC = () => {
     isOpen: boolean;
     meetingId: number | null;
   }>({ isOpen: false, meetingId: null });
+  const [noAppointmentsFound, setNoAppointmentsFound] = useState(false);
 
   /* This is not ideal as a new request is sent after the date is set
   in case of no meetings on the current date, but future meetings found.
   The response will be the same as the original request's.
   */
-  const { data: appointmentsResponse, isLoading } = useGetAppointmentsQuery({
+  const {
+    data: appointmentsResponse,
+    isLoading,
+    isError,
+    isSuccess,
+    error,
+  } = useGetAppointmentsQuery({
     date: (selectedDate ?? dayjs(new Date())).format("YYYY-MM-DD"),
   });
 
@@ -39,6 +46,21 @@ const Calendar: React.FC = () => {
     const today = dayjs(new Date());
     setSelectedDate(today);
   }, []);
+
+  useEffect(() => {
+    if (isError && error) {
+      if ("status" in error) {
+        if (error.status === 404) {
+          setNoAppointmentsFound(true);
+          setMeetings([]);
+        }
+      } else {
+        console.error("An unexpected error occurred:", error);
+      }
+    } else {
+      setNoAppointmentsFound(false);
+    }
+  }, [isError, error]);
 
   /* After appointments are fetched, sets the date (of the next
   appointments) and the appointments array from the response. */
@@ -179,9 +201,19 @@ const Calendar: React.FC = () => {
         </div>
 
         <div className="calendar-grid">
-          {renderHourLabels()}
-          {renderGridLines()}
-          {renderMeetingBlocks()}
+          {isLoading && <div className="loading">Loading...</div>}
+          {noAppointmentsFound && (
+            <div className="error">
+              No appointments found for this or any future date.
+            </div>
+          )}
+          {isSuccess && appointmentsResponse && (
+            <>
+              {renderHourLabels()}
+              {renderGridLines()}
+              {renderMeetingBlocks()}
+            </>
+          )}
         </div>
         {selectedMeetingId && (
           <DetailPanel

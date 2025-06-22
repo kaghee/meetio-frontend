@@ -40,7 +40,12 @@
     grid-template-columns: auto 1fr;
     grid-auto-rows: minmax(20px, auto);
     padding: 20px 10px 10px;
+    .error {
+      padding: 10px;
+      color: darkred;
+    }
   }
+
 
   .hour-label {
     grid-column: 1;
