@@ -1,27 +1,27 @@
+import dayjs from "dayjs";
+import type { Dayjs } from "dayjs";
+import { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
-import { DateTimePicker } from "@mui/x-date-pickers";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
-import type { MeetingData } from "../meeting/Meeting";
-import type { Dayjs } from "dayjs";
-import "./DetailPanel.scss";
 import { Checkbox } from "@mui/material";
-import dayjs from "dayjs";
+import { DateTimePicker } from "@mui/x-date-pickers";
 import {
   useGetDepartmentsQuery,
   useGetEmployeesByIdQuery,
 } from "../../services/department";
-import { useEffect, useState } from "react";
 import {
   useUpdateAppointmentMutation,
   useDeleteAppointmentMutation,
 } from "../../services/appointment";
+import type { MeetingData } from "../meeting/Meeting";
 import type { Employee } from "../../types";
+import "./DetailPanel.scss";
 
 interface DetailPanelProps {
   isOpen: boolean;
@@ -108,10 +108,43 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
     close();
   };
 
+  const renderAttendees = () => {
+    return employeesToDisplay?.map((employee) => (
+      <div className="attendee" key={employee.id}>
+        <span>{employee.name}</span>
+        <Controller
+          name="attendees"
+          control={control}
+          render={({ field }) => {
+            const isChecked =
+              employee.id !== undefined && field.value.includes(employee.id);
+
+            return (
+              <Checkbox
+                checked={isChecked}
+                onChange={() => {
+                  if (isChecked) {
+                    // Remove id from attendees formData
+                    field.onChange(
+                      field.value.filter((id) => id !== employee.id),
+                    );
+                  } else {
+                    // Add employee.id to formData
+                    field.onChange([...field.value, employee.id]);
+                  }
+                }}
+              />
+            );
+          }}
+        />
+      </div>
+    ));
+  };
+
   return (
     <Dialog className="dialog" open={isOpen} onClose={() => close()}>
       <form onSubmit={handleSubmit(onSubmit)}>
-        {meeting ? (
+        {meeting && (
           <>
             <DialogTitle>
               {meeting.title}
@@ -178,45 +211,11 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
                     </Select>
                   )}
                 />
-                <div className="attendees">
-                  {employeesToDisplay?.map((employee) => (
-                    <div className="attendee" key={employee.id}>
-                      <span>{employee.name}</span>
-                      <Controller
-                        name="attendees"
-                        control={control}
-                        render={({ field }) => {
-                          const isChecked =
-                            employee.id !== undefined &&
-                            field.value.includes(employee.id);
-
-                          return (
-                            <Checkbox
-                              checked={isChecked}
-                              onChange={() => {
-                                if (isChecked) {
-                                  // Remove id from attendees formData
-                                  field.onChange(
-                                    field.value.filter(
-                                      (id) => id !== employee.id,
-                                    ),
-                                  );
-                                } else {
-                                  // Add employee.id to formData
-                                  field.onChange([...field.value, employee.id]);
-                                }
-                              }}
-                            />
-                          );
-                        }}
-                      />
-                    </div>
-                  ))}
-                </div>
+                <div className="attendees">{renderAttendees()}</div>
               </div>
             </DialogContent>
           </>
-        ) : null}
+        )}
         <DialogActions>
           <Button disabled={!meeting} type={"submit"}>
             Save
