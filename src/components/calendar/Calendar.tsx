@@ -19,6 +19,7 @@ export const INTERVAL_MINUTES = 30;
 const Calendar: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
   const [meetings, setMeetings] = useState<MeetingData[]>([]);
+  const [noAppointmentsFound, setNoAppointmentsFound] = useState(false);
   const [selectedMeetingId, setSelectedMeetingId] = useState<number | null>(
     null,
   );
@@ -26,12 +27,10 @@ const Calendar: React.FC = () => {
     isOpen: boolean;
     meetingId: number | null;
   }>({ isOpen: false, meetingId: null });
-  const [noAppointmentsFound, setNoAppointmentsFound] = useState(false);
 
   /* This is not ideal as a new request is sent after the date is set
   in case of no meetings on the current date, but future meetings found.
-  The response will be the same as the original request's.
-  */
+  The response will be the same as the original request's. */
   const {
     data: appointmentsResponse,
     isLoading,
@@ -47,6 +46,7 @@ const Calendar: React.FC = () => {
     setSelectedDate(today);
   }, []);
 
+  /* Displays no meetings found text if no more meetings are found. */
   useEffect(() => {
     if (isError && error) {
       if ("status" in error) {

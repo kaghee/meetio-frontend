@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
 import { INTERVAL_MINUTES, START_HOUR } from "../calendar/Calendar";
-import "./Meeting.scss";
+import { useEffect, useState } from "react";
 import type { Employee } from "../../types";
+import "./Meeting.scss";
 
 interface MeetingProps {
   data: MeetingData;
