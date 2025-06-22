@@ -17,7 +17,11 @@ import {
   useGetEmployeesByIdQuery,
 } from "../../services/department";
 import { useEffect, useState } from "react";
-import { useUpdateAppointmentMutation } from "../../services/appointment";
+import {
+  useUpdateAppointmentMutation,
+  useDeleteAppointmentMutation,
+} from "../../services/appointment";
+import type { Employee } from "../../types";
 
 interface DetailPanelProps {
   isOpen: boolean;
@@ -38,7 +42,12 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
   meeting,
 }) => {
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<number>();
+  const [employeesToDisplay, setEmployeesToDisplay] = useState<
+    Partial<Employee>[]
+  >([]);
   const [updateAppointment] = useUpdateAppointmentMutation();
+  const [deleteAppointment] = useDeleteAppointmentMutation();
+
   const { control, handleSubmit, watch } = useForm<FormData>({
     defaultValues: {
       start: meeting ? dayjs(meeting.start_time) : undefined,
@@ -51,15 +60,39 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
   const departmentValue = watch("department");
 
   const { data: departments } = useGetDepartmentsQuery({});
-  const { data: employees } = useGetEmployeesByIdQuery(selectedDepartmentId!, {
-    skip: selectedDepartmentId === undefined,
-  });
+  const { data: departmentEmployees } = useGetEmployeesByIdQuery(
+    selectedDepartmentId!,
+    {
+      skip: selectedDepartmentId === undefined,
+    },
+  );
 
   useEffect(() => {
     if (departmentValue !== "") {
       setSelectedDepartmentId(parseInt(departmentValue));
     }
   }, [departmentValue]);
+
+  /* Initially displays all participants of the selected meeting.
+  Upon department selection, displays employees of the department. */
+  useEffect(() => {
+    if (!meeting) return;
+    if (!meeting.attendees && !departmentEmployees) return;
+
+    const itemsToDisplay: Partial<Employee>[] = (
+      departmentEmployees ?? meeting.attendees
+    ).map((emp) => ({
+      id: emp.id,
+      name: emp.name,
+    }));
+    setEmployeesToDisplay(itemsToDisplay);
+  }, [departmentEmployees, meeting, meeting?.attendees]);
+
+  const deleteMeeting = () => {
+    if (!meeting) return;
+    deleteAppointment(meeting.id);
+    close();
+  };
 
   const onSubmit = (data: FormData) => {
     if (!meeting) return;
@@ -72,6 +105,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
       attendee_ids: data.attendees,
     };
     updateAppointment(payload);
+    close();
   };
 
   return (
@@ -79,8 +113,12 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
       <form onSubmit={handleSubmit(onSubmit)}>
         {meeting ? (
           <>
-            <DialogTitle>{meeting.title}</DialogTitle>
+            <DialogTitle>
+              {meeting.title}
+              <div className="description">{meeting.description}</div>
+            </DialogTitle>
             <DialogContent>
+              <div className="block-label">Schedule</div>
               <div className="time-block">
                 <Controller
                   name="start"
@@ -106,6 +144,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
                 />
               </div>
               <hr />
+              <div className="block-label">Attendees</div>
               <div className="attendees-block">
                 <Controller
                   name="department"
@@ -139,9 +178,9 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
                     </Select>
                   )}
                 />
-                <div className="employees">
-                  {employees?.map((employee) => (
-                    <div className="employee" key={employee.id}>
+                <div className="attendees">
+                  {employeesToDisplay?.map((employee) => (
+                    <div className="attendee" key={employee.id}>
                       <span>{employee.name}</span>
                       <Controller
                         name="attendees"
@@ -182,7 +221,9 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
           <Button disabled={!meeting} type={"submit"}>
             Save
           </Button>
-          <Button disabled={!meeting}>Delete</Button>
+          <Button disabled={!meeting} onClick={deleteMeeting}>
+            Delete
+          </Button>
           <Button onClick={() => close()}>Cancel</Button>
         </DialogActions>
       </form>

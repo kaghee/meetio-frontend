@@ -37,8 +37,19 @@ export const appointmentApi = createApi({
         };
       },
     }),
+    deleteAppointment: builder.mutation<void, number>({
+      query: (id) => {
+        return {
+          url: `appointment/${id}/`,
+          method: "DELETE",
+        };
+      },
+    }),
   }),
 });
 
-export const { useGetAppointmentsQuery, useUpdateAppointmentMutation } =
-  appointmentApi;
+export const {
+  useGetAppointmentsQuery,
+  useUpdateAppointmentMutation,
+  useDeleteAppointmentMutation,
+} = appointmentApi;

@@ -1,4 +1,13 @@
 .dialog {
+  .description {
+    margin: 10px 0;
+    font-size: 14px;
+    color: #666;
+  }
+  .block-label {
+    font-weight: 600;
+    margin-bottom: 15px;
+  }
   [class*="MuiPickersInputBase-root"] {
     height: 40px;
     width: 180px;
@@ -8,6 +17,8 @@
     font-size: 16px;
   }
   .time-block {
+    margin: 0 10px 15px;
+
     .start {
       margin-right: 20px;
     }
@@ -26,18 +37,26 @@
 
   hr {
     border: .5px solid #ddd;
+    margin: 20px 0;
   }
 
   .department {
-    margin: 15px 0 10px;
+    margin: 0 10px;
     height: 40px;
   }
 
-  .attendees-block, .employees {
+  .attendees-block, .attendees {
     display: flex;
     flex-direction: column;
   }
-  .employee {
+  .attendees{
+    margin:  10px;
+
+    .label {
+      margin-top: 10px;
+    }
+  }
+  .attendee {
     padding-left: 10px;
     display: flex;
     align-items: center;
